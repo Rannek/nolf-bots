@@ -139,7 +139,8 @@ void	CFolderInventory::BuildInventoryList()
 		if (pStats->CanUseAmmo(nID))
 			m_nAmmo[nID] = 0;
 	}
-	for (int i=0; i < pMission->nNumAllowedAmmo; i++)
+	int i;
+	for (i =0; i < pMission->nNumAllowedAmmo; i++)
 	{
 		nID = pMission->aAllowedAmmo[i];
 		m_nAmmo[nID] = 0;

@@ -22,6 +22,8 @@ class GearItem : public PickupItem
 
 		GearItem();
 
+		uint8	GetGearId() const { return m_nGearId; }		// Used by bots
+
 	protected :
 
         uint32          EngineMessageFn(uint32 messageID, void *pData, LTFLOAT fData);

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Train the NOLF bots on Hydro by self-play (invisible dedicated servers).
+#
+#   nolf-train [start]   start, or continue after a stop / reboot (keeps the best bots so far)
+#   nolf-train stop      stop cleanly (servers off, game files restored)
+#   nolf-train status    how it's going
+#   nolf-train log       follow the training history (Ctrl+C to quit)
+#
+# Settings for start (environment): SERVERS=16 SPEED=2 ROUND=120
+# The best bots are installed automatically to NOLF/Bots/genome.txt, which
+# your games use.  Training pauses by itself while you play NOLF.
+set -u
+GAME=${NOLF_PREFIX:-$HOME/Games/nolf-1}/drive_c/Games/NOLF
+TRAIN=$GAME/Bots/train
+PY=${NOLF_PREFIX:-$HOME/Games/nolf-1}/drive_c/NOLFSource/linux/hydro_evolve.py
+
+running() { pgrep -f 'linux/hydro_evolve\.py' >/dev/null; }
+
+case "${1:-start}" in
+  start)
+    if running; then echo "Training is already running.  (nolf-train status / nolf-train stop)"; exit 0; fi
+    mkdir -p "$TRAIN"
+    rm -f "$TRAIN/STOP"
+    cd "$TRAIN" || exit 1
+    setsid nohup python3 -I "$PY" --servers "${SERVERS:-16}" --speed "${SPEED:-2}" --round "${ROUND:-120}" \
+      >> "$TRAIN/trainer.out" 2>&1 < /dev/null &
+    sleep 3
+    if running; then
+      echo "Training started (${SERVERS:-16} servers, x${SPEED:-2}, Hydro).  It continues from the current champion."
+      echo "Check:  nolf-train status      Stop:  nolf-train stop"
+    else
+      echo "Training didn't start; see $TRAIN/trainer.out"; tail -5 "$TRAIN/trainer.out"; exit 1
+    fi
+    ;;
+  stop)
+    if ! running; then echo "Training is not running."; exit 0; fi
+    touch "$TRAIN/STOP"
+    echo -n "Stopping"
+    for i in $(seq 1 60); do running || break; echo -n "."; sleep 1; done
+    echo
+    if running; then echo "Still stopping in the background (servers are shutting down)."; else echo "Stopped."; fi
+    ;;
+  status)
+    if running; then echo "Training: RUNNING"; else echo "Training: stopped"; fi
+    [ -f "$TRAIN/status.txt" ] && cat "$TRAIN/status.txt"
+    echo "--- recent history"
+    [ -f "$TRAIN/history.txt" ] && grep -E "CHAMPION|ACCEPTED|start|stopp|paus" "$TRAIN/history.txt" | tail -8
+    ;;
+  log)
+    tail -f "$TRAIN/history.txt"
+    ;;
+  *)
+    sed -n '2,12p' "$0"; exit 1 ;;
+esac

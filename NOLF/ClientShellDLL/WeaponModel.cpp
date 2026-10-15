@@ -1247,6 +1247,7 @@ HOBJECT CWeaponModel::CreateModelObject(HOBJECT hOldObj, ObjectCreateStruct & cr
 		createStruct.m_Flags2	 |= FLAG2_PORTALINVISIBLE | FLAG2_DYNAMICDIRLIGHT;
 
         hObj = g_pLTClient->CreateObject(&createStruct);
+        if (!hObj) SDL_Log("FXDIAG: player-view weapon model CreateObject FAILED (%s)", createStruct.m_Filename);
         if (!hObj) return LTNULL;
 
         //g_pLTClient->SetObjectColor(hObj, 1.0f, 1.0f, 1.0f, 1.0f);
@@ -3770,7 +3771,8 @@ void CWeaponModel::ChangeAmmo(uint8 nNewAmmoId, LTBOOL bForce)
 	// Make sure this is an ammo type our current weapon can use...
 
 	if (!m_pWeapon) return;
-	for (int i=0; i < m_pWeapon->nNumAmmoTypes; i++)
+	int i;
+	for (i =0; i < m_pWeapon->nNumAmmoTypes; i++)
 	{
 		if (nNewAmmoId == m_pWeapon->aAmmoTypes[i])
 		{

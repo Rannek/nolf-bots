@@ -581,7 +581,8 @@ LTBOOL   CFolderPlayer::CreatePlayerModel(LTBOOL bNewSkin /* = LTTRUE */)
 
 			int reqID[MAX_INT_ATTACHMENTS];
 			int numReq = g_pAttachButeMgr->GetRequirementIDs(m_szModName,m_szStyleName,reqID,MAX_INT_ATTACHMENTS);
-			for (int i = 0; i < numReq; i++)
+			int i;
+			for (i = 0; i < numReq; i++)
 			{
 				INT_ATTACH acs;
 				acs.fScale = g_pLayoutMgr->GetFolderCustomFloat((eFolderID)m_nFolderID,"CharScale");

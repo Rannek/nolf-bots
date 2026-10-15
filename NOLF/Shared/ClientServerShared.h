@@ -225,7 +225,7 @@ enum HitLocation
 
 #ifndef _DEMO
 #define GAME_HANDSHAKE_VER_MAJOR	1 // GAME_HANDSHAKE_VER_MAJOR.GAME_HANDSHAKE_VER_MINOR - 1
-#define GAME_HANDSHAKE_VER_MINOR	8 //  7 == 1.006.0-2, 1.006.3 == 8
+#define GAME_HANDSHAKE_VER_MINOR	7 //  7 == 1.006.0-2, 1.006.3 == 8. Bots build: 7 to match the installed MODERNIZER.REZ
 #else
 #define GAME_HANDSHAKE_VER_MAJOR	0 // Demo = 0.002
 #define GAME_HANDSHAKE_VER_MINOR	3    

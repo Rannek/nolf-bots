@@ -11,6 +11,7 @@
 // ----------------------------------------------------------------------- //
 
 #include "stdafx.h"
+#include "BotMgr.h"
 #include <stdio.h>
 #include "Destructible.h"
 #include "iltserver.h"
@@ -1299,6 +1300,8 @@ void CDestructible::ProcessPlayerDeath(HOBJECT hDamager)
 			g_pGameServerShell->SetUpdateGameServ();
 		}
 
+		g_BotMgr.OnPlayerKilled(pVictim, pKiller);
+
 		uint8 nLivesLeft = 255;
 		if (g_pGameServerShell->GetGameType() == COOPERATIVE_ASSAULT && g_NetUseSpawnLimit.GetFloat() > 0.0f)
 		{
@@ -1306,12 +1309,11 @@ void CDestructible::ProcessPlayerDeath(HOBJECT hDamager)
 		}
 
 
-		HCLIENT hClientVictim = pVictim->GetClient();
-		HCLIENT hClientKiller = pKiller->GetClient();
-		if (hClientVictim && hClientKiller)
+		// Bots have no HCLIENT, but they do have a player ID...
+		if ((pVictim->GetClient() || pVictim->IsBot()) && (pKiller->GetClient() || pKiller->IsBot()))
 		{
-            uint32 nVictimID = g_pLTServer->GetClientID (hClientVictim);
-            uint32 nKillerID = g_pLTServer->GetClientID (hClientKiller);
+            uint32 nVictimID = pVictim->GetPlayerID();
+            uint32 nKillerID = pKiller->GetPlayerID();
 
             HMESSAGEWRITE hWrite = g_pLTServer->StartMessage(LTNULL, MID_PLAYER_FRAGGED);
             g_pLTServer->WriteToMessageFloat(hWrite, (float)nVictimID);

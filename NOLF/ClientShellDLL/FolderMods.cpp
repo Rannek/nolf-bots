@@ -227,7 +227,8 @@ void	CFolderMods::BuildModsList()
 
 	}
 
-	for (int i=0;i < nNumFree;i++)
+	int i;
+	for (i =0;i < nNumFree;i++)
 	{
 		AddEmptySlot();
 	}
@@ -590,7 +591,8 @@ void CFolderMods::FillArray()
 			m_nMods[nMID] = SEL_ALLOWED;
 	}
 
-	for (int i=0; i < pMission->nNumAllowedMods; i++)
+	int i;
+	for (i =0; i < pMission->nNumAllowedMods; i++)
 	{
 		nMID = pMission->aAllowedMods[i];
 		m_nMods[nMID] = SEL_ALLOWED;

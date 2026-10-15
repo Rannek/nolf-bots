@@ -2746,6 +2746,7 @@ void CCharacterFX::CreateTeamFX()
 	else
 	{
 		m_hMarker = m_pClientDE->CreateObject(&createStruct);
+		if (!m_hMarker) SDL_Log("FXDIAG: team/marker sprite CreateObject FAILED (%s)", createStruct.m_Filename);
 		if (!m_hMarker) return;
 	}
 
@@ -2789,6 +2790,7 @@ void CCharacterFX::CreateChatFX()
 	else
 	{
 		m_hMarker = m_pClientDE->CreateObject(&createStruct);
+		if (!m_hMarker) SDL_Log("FXDIAG: team/marker sprite CreateObject FAILED (%s)", createStruct.m_Filename);
 		if (!m_hMarker) return;
 	}
 

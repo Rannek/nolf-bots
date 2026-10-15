@@ -138,7 +138,8 @@ LTBOOL CFolderCustomControls::InitControlList()
 	{
 		int nEntries = 0;
 		int nFirstEntry = m_nEntries;
-		for (int i = 0; i < g_kNumCommands - 1; i++)
+		int i;
+		for (i = 0; i < g_kNumCommands - 1; i++)
 		{
 			if (g_CommandArray[i].nCommandType == nFilter)
 			{
@@ -549,7 +550,8 @@ LTBOOL CFolderCustomControls::Render(HSURFACE hDestSurf)
 		if (nArraySize > 0)
 		{
 			// find the first key down event
-            for (uint32 i = 0; i < nArraySize; i++)
+            uint32 i;
+            for (i = 0; i < nArraySize; i++)
 			{
 				if (m_pInputArray[i].m_InputValue)
 				{
@@ -632,7 +634,8 @@ LTBOOL CFolderCustomControls::SetCurrentSelection (DeviceInput* pInput)
 
 		if (dev < FOLDER_CONTROLS_NUM_DEVICES)
 		{
-			for (int i = 0; i < m_nEntries; i++)
+			int i;
+			for (i = 0; i < m_nEntries; i++)
 			{
 				if (i == nIndex) continue;
 				if (stricmp (m_pEntries[i].strControlName[dev], sNewKey) == 0)
@@ -689,7 +692,8 @@ LTBOOL CFolderCustomControls::KeyRemappable (DeviceInput* pInput)
 			while (pAction)
 			{
                 LTBOOL bFoundFolderMatch = LTFALSE;
-				for (int i = 0; i < m_nEntries; i++)
+				int i;
+				for (i = 0; i < m_nEntries; i++)
 				{
 					if (m_pEntries[i].nAction == pAction->nActionCode)
 					{
@@ -871,7 +875,8 @@ void CFolderCustomControls::FillControlList()
 		{
 			continue;
 		}
-		for (int i = 0; i < m_nEntries; i++)
+		int i;
+		for (i = 0; i < m_nEntries; i++)
 		{
 			SAFE_STRCPY (m_pEntries[i].strControlName[dev], "");
 		}

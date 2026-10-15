@@ -31,6 +31,10 @@ public:
 	virtual void UpdateInterfaceSFX();
 	void	ReadyLaunch(LTBOOL bReady);
 
+	// Host a game on a single world straight from the command line
+	// (+BotMap), skipping the menus.
+	LTBOOL	QuickLaunch(int nGameType, const char* pWorld);
+
 protected:
 	void FillGameStruct(NetGame *pNG);
     LTBOOL LaunchGame();
@@ -51,6 +55,7 @@ protected:
 	char m_szPassword[MAX_PASSWORD];
 	char m_szPort[MAX_PASSWORD];
 	LTBOOL m_bUsePassword;
+	char m_szQuickWorld[MAX_PATH];
 
 	CGroupCtrl			*m_pNameGroup;
 	CLTGUIEditCtrl		*m_pEdit;

@@ -35,7 +35,7 @@ protected:
 class CBaseListCounter : public CBaseList {
 public:
 	// Constructors and destructors
-	CBaseListCounter() { m_nCount = 0; CBaseList::CBaseList(); };
+	CBaseListCounter() { m_nCount = 0; };
 	~CBaseListCounter() { };
 
 	// member insert and delete functions

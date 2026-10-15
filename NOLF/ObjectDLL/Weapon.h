@@ -79,6 +79,7 @@ class CWeapon
 
 		int		GetId()					const { return m_nWeaponId; }
 		int		GetAmmoId()				const { return m_nAmmoId; }
+		uint32	GetLastFireTimestamp()	const { return m_nLastTimestamp; }
 		int		GetAmmoInClip()			const { return m_nAmmoInClip; }
 		WEAPON*	GetWeaponData()			const { return m_pWeaponData; }
 		AMMO*	GetAmmoData()			const { return m_pAmmoData; }

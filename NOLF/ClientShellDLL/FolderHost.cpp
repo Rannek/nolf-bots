@@ -72,6 +72,7 @@ CFolderHost::CFolderHost()
 	m_bUsePassword = LTFALSE;
 	m_pPassToggle = LTNULL;
 	m_bReadyToLaunch = LTFALSE;
+	m_szQuickWorld[0] = '\0';
 
 	// Read the persistant host settings.
 	ReadNetHostSettings( );
@@ -580,7 +581,12 @@ void CFolderHost::FillGameStruct(NetGame *pNG)
     pNG->m_byType = (uint8)m_nGameType;
 
 	pNG->m_byNumLevels = 0;
-	if (m_nGameType == COOPERATIVE_ASSAULT)
+	if (m_szQuickWorld[0])
+	{
+		pNG->m_byNumLevels = 1;
+		SAFE_STRCPY(pNG->m_sLevels[0], m_szQuickWorld);
+	}
+	else if (m_nGameType == COOPERATIVE_ASSAULT)
 	{
         pNG->m_byNumLevels = (uint8)GetConsoleInt("NetCANumLevels", 0);
 	}
@@ -593,7 +599,8 @@ void CFolderHost::FillGameStruct(NetGame *pNG)
 
 	// Get each level...
 
-    for (uint8 i = 0; i < pNG->m_byNumLevels; i++)
+    uint8 i;
+    for (i = 0; i < pNG->m_byNumLevels && !m_szQuickWorld[0]; i++)
 	{
 		char sLevel[256] = { "" };
 		char sLabel[32];
@@ -667,6 +674,22 @@ void CFolderHost::HandleLaunch()
 	}
 }
 
+
+
+LTBOOL CFolderHost::QuickLaunch(int nGameType, const char* pWorld)
+{
+	if (!pWorld || !pWorld[0]) return LTFALSE;
+
+	SAFE_STRCPY(m_szSessionName, g_vtNetSessionName.GetStr());
+	sprintf(m_szPort, "%d", (uint16)g_vtNetPort.GetFloat());
+	m_bUsePassword = LTFALSE;
+	m_nGameType = (nGameType == COOPERATIVE_ASSAULT) ? COOPERATIVE_ASSAULT : DEATHMATCH;
+	SAFE_STRCPY(m_szQuickWorld, pWorld);
+
+	LTBOOL bOk = LaunchGame();
+	m_szQuickWorld[0] = '\0';
+	return bOk;
+}
 
 
 LTBOOL CFolderHost::LaunchGame()

@@ -129,12 +129,12 @@ extern char c_szNoReaction[];
 
 #define IMPLEMENT_ALIGNMENT(ai, alignment) \
  \
-BEGIN_CLASS(AI_##alignment##_##ai##) \
-END_CLASS_DEFAULT(AI_##alignment##_##ai##, AI_##ai##, NULL, NULL) \
+BEGIN_CLASS(AI_##alignment##_##ai) \
+END_CLASS_DEFAULT(AI_##alignment##_##ai, AI_##ai, NULL, NULL) \
  \
-AI_##alignment##_##ai##::AI_##alignment##_##ai##() : AI_##ai##() \
+AI_##alignment##_##ai::AI_##alignment##_##ai() : AI_##ai() \
 { \
-	m_cc = ##alignment##; \
+	m_cc = alignment; \
 	m_fSenseUpdateRate = 0.10f; \
     m_hstrAttributeTemplate = g_pLTServer->CreateString("AI_" #alignment "_" #ai ); \
 } \
@@ -142,10 +142,10 @@ AI_##alignment##_##ai##::AI_##alignment##_##ai##() : AI_##ai##() \
 #ifdef NUKE_REACTIONS
 
 	#define IMPLEMENT_ALIGNMENT_NEUTRAL(ai) \
-	BEGIN_CLASS(AI_NEUTRAL_##ai##) \
-	END_CLASS_DEFAULT(AI_NEUTRAL_##ai##, AI_##ai##, NULL, NULL) \
+	BEGIN_CLASS(AI_NEUTRAL_##ai) \
+	END_CLASS_DEFAULT(AI_NEUTRAL_##ai, AI_##ai, NULL, NULL) \
 	 \
-	AI_NEUTRAL_##ai##::AI_NEUTRAL_##ai##() : AI_##ai##() \
+	AI_NEUTRAL_##ai::AI_NEUTRAL_##ai() : AI_##ai() \
 	{ \
 		m_cc = NEUTRAL; \
 		m_fSenseUpdateRate = 0.25f; \
@@ -156,7 +156,7 @@ AI_##alignment##_##ai##::AI_##alignment##_##ai##() : AI_##ai##() \
 
 	#define IMPLEMENT_ALIGNMENT_NEUTRAL(ai) \
 	 \
-	BEGIN_CLASS(AI_NEUTRAL_##ai##) \
+	BEGIN_CLASS(AI_NEUTRAL_##ai) \
 			ADD_STRINGPROP_FLAG(ISE1st,					c_szNoReaction,			PF_GROUP2|PF_DYNAMICLIST) \
 			ADD_STRINGPROP_FLAG(ISE,					"Distress",				PF_GROUP2|PF_STATICLIST) \
 			ADD_STRINGPROP_FLAG(ISEFalse1st,			c_szNoReaction,			PF_HIDDEN) \
@@ -223,9 +223,9 @@ AI_##alignment##_##ai##::AI_##alignment##_##ai##() : AI_##ai##() \
 			ADD_STRINGPROP_FLAG(HearEnemyFootstepDistance,		"FALSE", PF_GROUP3|PF_RADIUS|PF_HIDDEN) \
 			ADD_STRINGPROP_FLAG(CanHearEnemyDisturbance,		"FALSE",	PF_GROUP3|PF_HIDDEN) \
 			ADD_STRINGPROP_FLAG(HearEnemyDisturbanceDistance,	"0", PF_GROUP3|PF_RADIUS|PF_HIDDEN) \
-	END_CLASS_DEFAULT(AI_NEUTRAL_##ai##, AI_##ai##, NULL, NULL) \
+	END_CLASS_DEFAULT(AI_NEUTRAL_##ai, AI_##ai, NULL, NULL) \
 	 \
-	AI_NEUTRAL_##ai##::AI_NEUTRAL_##ai##() : AI_##ai##() \
+	AI_NEUTRAL_##ai::AI_NEUTRAL_##ai() : AI_##ai() \
 	{ \
 		m_cc = NEUTRAL; \
 		m_fSenseUpdateRate = 1.0f; \
@@ -241,44 +241,44 @@ AI_##alignment##_##ai##::AI_##alignment##_##ai##() : AI_##ai##() \
 
 #define DEFINE_ALIGNMENT(ai, alignment) \
  \
-class AI_##alignment##_##ai## : public AI_##ai## \
+class AI_##alignment##_##ai : public AI_##ai \
 { \
 	public : \
  \
- 		AI_##alignment##_##ai##(); \
+ 		AI_##alignment##_##ai(); \
 }; \
 
 #define DEFINE_HUMAN(human) \
  \
-class AI_##human## : public CAIHuman \
+class AI_##human : public CAIHuman \
 { \
 	public : \
 \
- 		AI_##human##();\
+ 		AI_##human();\
 };\
 \
-DEFINE_ALIGNMENTS(##human##)
+DEFINE_ALIGNMENTS(human)
 
 #define BEGIN_IMPLEMENT_HUMAN(human, alignment) \
  \
-BEGIN_CLASS(AI_##human##)\
+BEGIN_CLASS(AI_##human)\
 	ADD_VECTORPROP_VAL_FLAG(Dims, 24.0f, 53.0f, 24.0f, PF_DIMS|PF_HIDDEN)\
 
 #define END_IMPLEMENT_HUMAN(human, alignment) \
  \
-END_CLASS_DEFAULT_FLAGS(AI_##human##, CAIHuman, NULL, NULL, CF_HIDDEN)\
+END_CLASS_DEFAULT_FLAGS(AI_##human, CAIHuman, NULL, NULL, CF_HIDDEN)\
 \
-AI_##human##::AI_##human##() : CAIHuman() \
+AI_##human::AI_##human() : CAIHuman() \
 { \
 	m_eModelId = g_pModelButeMgr->GetModelId(#human);\
 	m_eModelSkeleton = g_pModelButeMgr->GetModelSkeleton(m_eModelId);\
-	m_cc = ##alignment##;\
+	m_cc = alignment;\
     m_hstrAttributeTemplate = g_pLTServer->CreateString(#human);\
 }\
 \
-IMPLEMENT_ALIGNMENTS(##human##);\
+IMPLEMENT_ALIGNMENTS(human);\
 
-#define ADD_ATTACHMENT(pos, attachment) ADD_STRINGPROP_FLAG(##pos##,	attachment,			PF_GROUP6|PF_STATICLIST)
+#define ADD_ATTACHMENT(pos, attachment) ADD_STRINGPROP_FLAG(pos,	attachment,			PF_GROUP6|PF_STATICLIST)
 
 class CAIReactions
 {

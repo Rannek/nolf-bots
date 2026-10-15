@@ -88,6 +88,8 @@ public:
 
 class CGameServerShell : public IServerShell
 {
+	friend class CBotMgr;
+
 	public :
 
         CGameServerShell(ILTServer *pServerDE);

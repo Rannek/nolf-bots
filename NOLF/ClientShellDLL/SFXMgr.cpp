@@ -119,6 +119,14 @@ extern CGameClientShell* g_pGameClientShell;
 
 static CWeaponFX s_WeaponFX;
 
+// Diagnostics (bots project): how full the fx lists get, and when creating
+// an effect fails.  Written to Debug.log.
+static int		s_anFxFailed[DYN_ARRAY_SIZE];
+static int		s_anFxEvicted[DYN_ARRAY_SIZE];
+static int		s_nFxFailedOther = 0;
+static LTFLOAT	s_fNextFxReport = 0.0f;
+static LTFLOAT	s_fLastFailReport = 0.0f;
+
 // The special FX banks...
 CBankedList<CMuzzleFlashFX> g_SFXBank_MuzzleFlash;
 CBankedList<CPlayerSoundFX> g_SFXBank_PlayerSound;
@@ -1140,6 +1148,18 @@ CSpecialFX* CSFXMgr::CreateSFX(uint8 nId, SFXCREATESTRUCT *psfxCreateStruct,
 
 	if (!pSFX->CreateObject(g_pLTClient))
 	{
+		int nFailIdx = GetDynArrayIndex(nId);
+		if (0 <= nFailIdx && nFailIdx < DYN_ARRAY_SIZE) s_anFxFailed[nFailIdx]++;
+		else s_nFxFailedOther++;
+
+		LTFLOAT fNow = g_pLTClient->GetTime();
+		if (fNow - s_fLastFailReport > 1.0f)
+		{
+			s_fLastFailReport = fNow;
+			SDL_Log("FXDIAG: CreateObject FAILED for sfx id %d (failures so far: %d)", (int)nId,
+				(0 <= nFailIdx && nFailIdx < DYN_ARRAY_SIZE) ? s_anFxFailed[nFailIdx] : s_nFxFailedOther);
+		}
+
 		DeleteSFX(pSFX);
         return LTNULL;
 	}
@@ -1162,6 +1182,23 @@ CSpecialFX* CSFXMgr::CreateSFX(uint8 nId, SFXCREATESTRUCT *psfxCreateStruct,
 void CSFXMgr::UpdateSpecialFX()
 {
     LTFLOAT fTime = g_pLTClient->GetTime();
+
+	if (fTime > s_fNextFxReport)
+	{
+		s_fNextFxReport = fTime + 10.0f;
+
+		char szReport[1024];
+		int nLen = _snprintf(szReport, sizeof(szReport)-1, "FXDIAG t=%.0f lists(id:used/max fail evict):", fTime);
+		for (int i = 0; i < DYN_ARRAY_SIZE && nLen < (int)sizeof(szReport) - 40; i++)
+		{
+			int nUsed = 0, nMax = m_dynSFXLists[i].GetSize();
+			for (int u = 0; u < nMax; u++) if (m_dynSFXLists[i][u]) nUsed++;
+			if (nUsed == 0 && !s_anFxFailed[i] && !s_anFxEvicted[i]) continue;
+			nLen += _snprintf(szReport + nLen, sizeof(szReport)-1-nLen, " %d:%d/%d %d %d", i, nUsed, nMax, s_anFxFailed[i], s_anFxEvicted[i]);
+		}
+		szReport[sizeof(szReport)-1] = '\0';
+		SDL_Log("%s", szReport);
+	}
 
 	// Update dynamic sfx...
 
@@ -1271,6 +1308,11 @@ void CSFXMgr::AddDynamicSpecialFX(CSpecialFX* pSFX, uint8 nId)
 
 	if (0 <= nIndex && nIndex < DYN_ARRAY_SIZE)
 	{
+		// Full list: Add() will throw out the oldest effect
+		int nUsed = 0, nMax = m_dynSFXLists[nIndex].GetSize();
+		for (int u = 0; u < nMax; u++) if (m_dynSFXLists[nIndex][u]) nUsed++;
+		if (nMax > 0 && nUsed >= nMax) s_anFxEvicted[nIndex]++;
+
 		m_dynSFXLists[nIndex].Add(pSFX);
 	}
 

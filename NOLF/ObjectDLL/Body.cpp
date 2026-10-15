@@ -438,7 +438,7 @@ void Body::Init(const BODYINITSTRUCT& bi)
 	if (IsPlayer(bi.pCharacter->m_hObject))
 	{
 		CPlayerObj* pPlayer = (CPlayerObj*) bi.pCharacter;
-		bcs.nClientId = (uint8) g_pLTServer->GetClientID(pPlayer->GetClient());
+		bcs.nClientId = (uint8) pPlayer->GetPlayerID();
 	}
 
     HMESSAGEWRITE hMessage = g_pLTServer->StartSpecialEffectMessage(this);

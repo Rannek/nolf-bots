@@ -465,8 +465,7 @@ void Intelligence::DoActivate(HOBJECT hSender)
 			uint8 nScore = (uint8)g_vtNetIntelScore.GetFloat();
 			pPlayer->AddToScore(nScore);
 			
-			HCLIENT hClient = pPlayer->GetClient();
-		    uint32 nPlayerID = g_pLTServer->GetClientID(hClient);
+		    uint32 nPlayerID = pPlayer->GetPlayerID();
 
             HMESSAGEWRITE hWrite = g_pLTServer->StartMessage (LTNULL, MID_TEAM_SCORED);
             g_pLTServer->WriteToMessageDWord (hWrite, nPlayerID);

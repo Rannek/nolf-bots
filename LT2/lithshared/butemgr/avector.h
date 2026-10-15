@@ -20,7 +20,7 @@ public:
 
 
 #if defined(_LITHTECH_)
-    operator const LTVector() const
+    operator LTVector() const
 	{
         LTVector vec;
 		vec.x = (float)m_i;

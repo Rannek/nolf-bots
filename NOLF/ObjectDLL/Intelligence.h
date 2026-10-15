@@ -23,6 +23,10 @@ class Intelligence : public Prop
 		Intelligence();
 		~Intelligence();
 
+		// Used by bots
+		uint8	GetTeamFilter() const	{ return m_nPlayerTeamFilter; }
+		LTBOOL	IsPhotoOnly() const		{ return m_bPhotoOnly; }
+
 	protected :
 
         virtual uint32  EngineMessageFn(uint32 messageID, void *pData, LTFLOAT lData);

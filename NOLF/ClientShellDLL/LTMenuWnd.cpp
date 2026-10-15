@@ -413,7 +413,7 @@ BOOL CLTMenuWnd::SendMessage(CLTWnd* pSender, int nMsg, int nParam1,int nParam2)
 			if(nParam2 >= m_nNumItems)
 				return TRUE;
 
-			m_byActivatedSelection = BYTE(nParam2 + 1);
+			m_byActivatedSelection = (BYTE)(nParam2 + 1);
 			TRACE("Choice # %d selected!\n",m_byActivatedSelection);
 
 			return TRUE;

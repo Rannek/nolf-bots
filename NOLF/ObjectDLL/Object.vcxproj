@@ -430,6 +430,12 @@ call "D:\GameDev\no-one-lives-forever-master\NOLF\_after_build_debug.bat"</Comma
     <ClCompile Include="AnimatorPlayer.cpp" />
     <ClCompile Include="Attachments.cpp" />
     <ClCompile Include="Body.cpp" />
+    <ClCompile Include="BotMgr.cpp" />
+    <ClCompile Include="BotNav.cpp" />
+    <ClCompile Include="BotPlayer.cpp" />
+    <ClCompile Include="BotSpeed.cpp" />
+    <ClCompile Include="BotWorld.cpp" />
+    <ClCompile Include="BotMapInfo.cpp" />
     <ClCompile Include="BodyState.cpp" />
     <ClCompile Include="Breakable.cpp" />
     <ClCompile Include="CachedFiles.cpp" />
@@ -669,6 +675,11 @@ call "D:\GameDev\no-one-lives-forever-master\NOLF\_after_build_debug.bat"</Comma
     <ClInclude Include="AnimatorPlayer.h" />
     <ClInclude Include="Attachments.h" />
     <ClInclude Include="Body.h" />
+    <ClInclude Include="BotMgr.h" />
+    <ClInclude Include="BotNav.h" />
+    <ClInclude Include="BotPlayer.h" />
+    <ClInclude Include="BotWorld.h" />
+    <ClInclude Include="BotMapInfo.h" />
     <ClInclude Include="BodyState.h" />
     <ClInclude Include="Bouncer.h" />
     <ClInclude Include="Breakable.h" />

@@ -1,3 +1,69 @@
+# NOLF Bots
+
+Computer players for **No One Lives Forever** multiplayer: play H.A.R.M. vs UNITY
+or DM on your own, against and alongside bots. Made for **Hydro**, where
+they know the zipcords, the water routes and the documents. Other maps work, but
+the bots haven't been tuned for them.
+
+The bots play fair. They know the map, but not where you are: they see, hear and
+call each other out like players do, and pick up every weapon, armor and SCUBA
+gear themselves.
+
+**[Download the latest version](../../releases/latest)**
+
+## Install
+
+You need NOLF Game of the Year edition with
+[NOLF Modernizer 1.006](https://haekb.itch.io/nolf-modernizer) installed.
+
+1. Download `NOLF-Bots-<version>.zip` from [Releases](../../releases) and unpack it
+   into your NOLF folder (the one with `NOLF.exe`).
+2. Start `NOLF.exe`, click **Advanced**, then **Customize**.
+3. **Add** `BOTS.REZ` so it comes after `Modernizer.rez`. Keep
+   **Always load these rez files** ticked and click **Ok**.
+4. **Multiplayer > Host**, choose H.A.R.M. vs UNITY and Hydro. Bots fill the game to 12 players.
+
+Settings live in `Bots\bots.cfg`, which is written the first time you host. The
+defaults: everyone runs 50% faster, items come back 3x faster, no falling damage,
+everyone spawns with a Walther SMG, bot skill 4 of 5 balancing itself to keep the
+score close. While hosting, type `!bots` in the chat for the bot commands. The
+full player guide is [release/README.txt](release/README.txt).
+
+## How the bots work
+
+The server code is in `NOLF/ObjectDLL/Bot*.cpp`:
+
+- **BotWorld** measures each map: every floor, ledge, ladder, zipcord, jump and
+  swim, and saves it in `Bots\<map>.bwm`.
+- **BotNav** turns that into paths and remembers where bots get killed
+  (`Bots\<map>.nav`).
+- **BotMapInfo** works out the map's areas and the different ways between the bases.
+- **BotPlayer** is one bot: moving, picking up items, fighting, team play, zipcords, water.
+- **BotMgr** adds and removes bots, runs `bots.cfg` and the chat commands, and
+  writes a log of what each bot decided and why (`Bots\games\`).
+
+## Building
+
+The bots are developed with a clang-cl cross build on Linux (see
+`linux/CMakeLists.txt`; it needs clang-cl and the Windows SDK from xwin):
+
+```sh
+cmake -S linux -B build-linux -G Ninja -DCMAKE_TOOLCHAIN_FILE=linux/toolchain-clang-cl-x86.cmake
+ninja -C build-linux
+linux/make_release.sh 0.1.0      # the player zip
+```
+
+## License
+
+Like Modernizer, this is bound to the original EULA of the NO ONE LIVES FOREVER
+Source Code v1.003 (see `readme.txt`): free, non-commercial, and you need the
+retail game.
+
+---
+
+*Everything below is the original NOLF Modernizer readme by haekb. This project
+is built on it.*
+
 # No One Lives Forever Modernizer
 
 [![Build Status](https://dev.azure.com/heytherecoffee/NOLF-Modernizer/_apis/build/status/haekb.nolf1-modernizer?branchName=master)](https://dev.azure.com/heytherecoffee/NOLF-Modernizer/_build/latest?definitionId=3&branchName=master)

@@ -20,3 +20,7 @@ Final_Release
 UpgradeLog*.htm
 ART
 *.pdb
+# Release packaging (linux/make_release.sh)
+release/stage/
+release/out/
+__pycache__/

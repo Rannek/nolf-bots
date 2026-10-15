@@ -12,13 +12,13 @@
 #define __FACTORY_H__
 
 #define FACTORY_NEW(fact)\
-	CFactory<##fact##>::Create();
+	CFactory<fact>::Create();
 
 #define FACTORY_DELETE(fact)\
 	fact->Destroy();
 
 #define DEFINE_FACTORY_CLASS(fact)\
-	public CFactory<##fact##>
+	public CFactory<fact>
 
 #define	DEFINE_ABSTRACT_FACTORY_METHODS(fact) \
 	public:\
@@ -31,14 +31,14 @@
 	public:\
 	virtual void Constructor();\
 	virtual void Destructor();\
-	virtual void Destroy() { CFactory<##fact##>::Destroy((##fact##*)this); }\
+	virtual void Destroy() { CFactory<fact>::Destroy((fact*)this); }\
 	private:
 
 #define IMPLEMENT_FACTORY(fact, size)\
-	CFactory<##fact##>::CCleaner CFactory<##fact##>::s_Cleaner;\
-	int CFactory<##fact##>::s_cTYPE;\
-	int CFactory<##fact##>::s_iCursor;\
-	##fact##** CFactory<##fact##>::s_aPTYPE = CFactory<##fact##>::Initialize(size);
+	template<> CFactory<fact>::CCleaner CFactory<fact>::s_Cleaner{};\
+	template<> int CFactory<fact>::s_cTYPE{};\
+	template<> int CFactory<fact>::s_iCursor{};\
+	template<> fact** CFactory<fact>::s_aPTYPE = CFactory<fact>::Initialize(size);
 
 template<class TYPE> class CFactory
 {

@@ -800,7 +800,7 @@ void CProjectile::AddImpact(HOBJECT hObj, LTVector vFirePos, LTVector vImpactPos
         CPlayerObj* pPlayer = (CPlayerObj*) g_pLTServer->HandleToObject(m_hFiredFrom);
 		if (pPlayer)
 		{
-            fxStruct.nShooterId = (uint8) g_pLTServer->GetClientID(pPlayer->GetClient());
+            fxStruct.nShooterId = (uint8) pPlayer->GetPlayerID();
 		}
 	}
 
@@ -889,7 +889,7 @@ void CProjectile::AddSpecialFX()
         CPlayerObj* pPlayer = (CPlayerObj*) g_pLTServer->HandleToObject(m_hFiredFrom);
 		if (pPlayer)
 		{
-            nShooterId = (uint8) g_pLTServer->GetClientID(pPlayer->GetClient());
+            nShooterId = (uint8) pPlayer->GetPlayerID();
 		}
 	}
 

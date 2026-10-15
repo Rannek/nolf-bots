@@ -120,7 +120,8 @@ LTBOOL CFolderCustomLevel::Build()
 	{
 		char Buf[255];
 
-		for (int i=0; i < nNumPaths; ++i)
+		int i;
+		for (i =0; i < nNumPaths; ++i)
 		{
 			pathBuf[0] = '\0';
 			g_pClientButeMgr->GetWorldPath(i, pathBuf, ARRAY_LEN(pathBuf));
@@ -140,13 +141,15 @@ LTBOOL CFolderCustomLevel::Build()
 
 	// now sort the array (shellsort)
 
-	for (int i = nIndex / 2; i > 0; i = (i == 2) ? 1 : (int) (i / 2.2))
+	int i;
+	for (i = nIndex / 2; i > 0; i = (i == 2) ? 1 : (int) (i / 2.2))
 	{
 		for (int j = i; j < nIndex; j++)
 		{
 			char* pTemp = m_pFilenames[j];
 
-			for (int k = j; k >= i && stricmp (pTemp, m_pFilenames[k - i]) < 0; k -= i)
+			int k;
+			for (k = j; k >= i && stricmp (pTemp, m_pFilenames[k - i]) < 0; k -= i)
 			{
 				m_pFilenames[k] = m_pFilenames[k - i];
 			}

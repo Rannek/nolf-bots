@@ -173,6 +173,44 @@ class CPlayerObj : public CCharacter
 		// Handshake status of the player
 		LTBOOL HasDoneHandshake() { return m_bHasDoneHandshake; }
 		void FinishHandshake() { m_bHasDoneHandshake = LTTRUE; }
+
+		// Bots are players driven by the server instead of a client.  They
+		// have no HCLIENT, so anything addressed to "our client" must check
+		// m_hClient (StartMessage(LTNULL) would broadcast to everybody).
+
+		LTBOOL	IsBot() const { return m_bIsBot; }
+		CPlayerAttachments* GetAttachmentsForBots() const { return m_pPlayerAttachments; }	// What anyone can see in their hands
+		uint32	GetPlayerID() const;	// Client ID for humans, BOT_ID_BASE+n for bots
+		LTBOOL	IsCommandOn(int nCommand) const;
+		LTFLOAT	GetLastFireTime() const { return m_fLastFireTime; }	// Bots "hear" gunfire
+		LTBOOL	IsRidingVehicle() const { return m_ePPhysicsModel != PPM_NORMAL; }
+		void	BotInit(uint32 nBotID, const char* szName, const char* szModel, uint32 dwTeamID);
+
+	protected :
+
+		LTBOOL	HasController() const { return m_hClient || m_bIsBot; }
+		virtual void UpdateBot() {}		// Bot "input", called every update before UpdateCommands()
+
+		void	SetBotCommand(int nCommand, LTBOOL bOn);
+		void	ClearBotCommands() { m_dwBotCommands = 0; }
+
+		CPlayerAttachments*	GetPlayerAttachments() const { return m_pPlayerAttachments; }
+		LTFLOAT	GetRunVel() const { return m_fRunVel; }
+		LTFLOAT	GetJumpVel() const { return m_fJumpVel; }
+		LTFLOAT	GetZipCordVelocity() const { return m_fZipCordVel; }
+		LTFLOAT	GetLadderVelocity() const { return m_fLadderVel; }
+		void	DismountVehicle() { SetPhysicsModel(PPM_NORMAL); }
+		void	SetWeaponStatus(uint8 nStatus) { m_nWeaponStatus = nStatus; }
+		void	SetMotionStatus(uint8 nStatus) { m_nMotionStatus = nStatus; }
+		uint8	GetMotionStatus() const { return m_nMotionStatus; }
+
+		void	NoteFired() { m_fLastFireTime = g_pLTServer->GetTime(); }
+
+		LTBOOL	m_bIsBot;
+		LTFLOAT	m_fLastFireTime;
+		uint32	m_nBotID;
+		uint32	m_dwBotCommands;	// Bit per COMMAND_ID_* (< 32)
+
 	protected :
 
         uint32 EngineMessageFn(uint32 messageID, void *pData, LTFLOAT lData);

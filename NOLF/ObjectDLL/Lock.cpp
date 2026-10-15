@@ -337,7 +337,7 @@ void Lock::HandleGadgetMsg(HOBJECT hSender, ConParse & parse)
 			CPlayerObj* pPlayer = (CPlayerObj*) g_pLTServer->HandleToObject(hSender);
 			if (pPlayer)
 			{
-				fxStruct.nShooterId = (uint8) g_pLTServer->GetClientID(pPlayer->GetClient());
+				fxStruct.nShooterId = (uint8) pPlayer->GetPlayerID();
 			}
 		}
 

@@ -1161,10 +1161,9 @@ bool CButeMgr::Save(const char* szNewFileName)
 	m_pSaveData->clear();
 	if (m_bCrypt)
 	{
-		if (szNewFileName)
-			m_cryptMgr.Encrypt(*m_pSaveData, STD ofstream(szNewFileName, STD ios::binary));
-		else
-			m_cryptMgr.Encrypt(*m_pSaveData, STD ofstream(m_sAttributeFilename, STD ios::binary));
+		// Named stream: binding a temporary to a non-const reference is an MSVC-only extension.
+		STD ofstream os(szNewFileName ? szNewFileName : (const char*)m_sAttributeFilename, STD ios::binary);
+		m_cryptMgr.Encrypt(*m_pSaveData, os);
 	}
 
 	delete ss.str();

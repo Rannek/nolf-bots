@@ -12,6 +12,7 @@
 
 #include "stdafx.h"
 #include "GameServerShell.h"
+#include "BotMgr.h"
 #include "PlayerObj.h"
 #include "iltserver.h"
 #include "MsgIDs.h"
@@ -538,7 +539,8 @@ void CGameServerShell::SendGameDataToClient(HCLIENT hClient)
     g_pLTServer->WriteToMessageByte(hWrite, (uint8)nNumObj);
 
 	//send list of general objectives
-	for (int i = 0; i < m_Objectives[0].nNumObjectives; i++)
+	int i;
+	for (i = 0; i < m_Objectives[0].nNumObjectives; i++)
 	{
         g_pLTServer->WriteToMessageDWord(hWrite, (uint32)m_Objectives[0].dwObjectives[i]);
 	}
@@ -580,6 +582,8 @@ void CGameServerShell::SendGameDataToClient(HCLIENT hClient)
 
 void CGameServerShell::OnClientExitWorld(HCLIENT hClient)
 {
+	g_BotMgr.OnPlayerRemoved();
+
 	if (GetGameType() != SINGLE)
 	{
 		// Send a message to all clients, letting them know this user is leaving the world
@@ -635,6 +639,7 @@ void CGameServerShell::PreStartWorld(LTBOOL bSwitchingWorlds)
 
 	m_charMgr.PreStartWorld();
 	g_DialogueWindow.Term();
+	g_BotMgr.PreStartWorld();
 
 	// Tell the server app.
 	ServerAppPreStartWorld( );
@@ -657,6 +662,7 @@ void CGameServerShell::PostStartWorld()
 {
 	m_charMgr.PostStartWorld(m_nLastLGFlags);
 	g_DialogueWindow.Init();
+	g_BotMgr.PostStartWorld();
 
 	static CVarTrack cvResetAIReactions;
 	if (!cvResetAIReactions.IsInitted())
@@ -674,10 +680,9 @@ void CGameServerShell::PostStartWorld()
 
 void CGameServerShell::SendPlayerInfoMsgToClients(HCLIENT hClients, CPlayerObj *pPlayer, LTBOOL bNewPlayer)
 {
-	HCLIENT hClient	= pPlayer->GetClient();
-	if (!hClient) return;
+	if (!pPlayer->GetClient() && !pPlayer->IsBot()) return;
 
-    uint32  nClientID   = g_pLTServer->GetClientID(hClient);
+    uint32  nClientID   = pPlayer->GetPlayerID();
     HSTRING hClientName = g_pLTServer->CreateString(pPlayer->GetNetName());
 
 	uint8 nLives = 255;
@@ -864,7 +869,10 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 		{
 			HSTRING hString = g_pLTServer->ReadFromMessageHString(hMessage);
 			char* command = g_pLTServer->GetStringData(hString);
-			g_pLTServer->RunGameConString(command);
+			if (!g_BotMgr.HandleCommand(command))
+			{
+				g_pLTServer->RunGameConString(command);
+			}
 		}
 		break;
 		
@@ -1013,6 +1021,7 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 						SendPlayerInfoMsgToClients(pPlayer->GetClient(), pCurPlayer, LTFALSE);
 					}
 				}
+				g_BotMgr.SendBotInfos(pPlayer->GetClient());
 			}
 
 		} 
@@ -1044,6 +1053,7 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
                             SendPlayerInfoMsgToClients(pPlayer->GetClient(), pCurPlayer, LTFALSE);
 						}
 					}
+					g_BotMgr.SendBotInfos(pPlayer->GetClient());
 					if (messageID == MID_PLAYER_MULTIPLAYER_INIT)
 					{
 						pPlayer->Respawn();
@@ -1079,6 +1089,18 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 			char szString[100];
 			szString[0] = 0;
 			hMessage->ReadStringFL(szString, sizeof(szString));
+
+			// Bot commands from the host: "Name: !addbot ..." (the console is
+			// disabled in multiplayer, so chat is how the host talks to us)
+			char* pBotCmd = strstr(szString, ": !");
+			if (pBotCmd && (g_pLTServer->GetClientInfoFlags(hSender) & CIF_LOCAL))
+			{
+				if (!g_BotMgr.HandleCommand(pBotCmd + 3))
+				{
+					g_BotMgr.HandleCommand("bot_help");
+				}
+				break;
+			}
 
 			std::string sMessage = FilterString(szString);
 			strcpy_s(szString, 100, sMessage.c_str());
@@ -2330,6 +2352,8 @@ void CGameServerShell::UpdateClientPingTimes()
                 g_pLTServer->WriteToMessageWord(hWrite, (uint16)(ping * 1000.0f));
 			}
 
+        g_BotMgr.WriteBotPings(hWrite);
+
         g_pLTServer->WriteToMessageWord(hWrite, 0xFFFF);
         g_pLTServer->EndMessage2(hWrite, MESSAGE_NAGGLE);
 
@@ -2414,6 +2438,9 @@ void CGameServerShell::Update(LTFLOAT timeElapsed)
 
 	// Update multiplayer stuff...
 	UpdateMultiplayer();
+
+	// Bots...
+	g_BotMgr.Update();
 
 	// See if we should change worlds.
 	CheckMultiSwitchWorlds();
@@ -3066,6 +3093,15 @@ void CGameServerShell::UpdateMultiplayer()
 					}
 				}
 			}
+			for (int b = 0; b < g_BotMgr.GetNumBots() && !bStartLevel; b++)
+			{
+				CPlayerObj* pBot = g_BotMgr.GetBotPlayer(b);
+				if (pBot && pBot->GetFragCount() >= (int)g_NetEndFrags.GetFloat())
+				{
+					m_eLevelEnd = LE_FRAGLIMIT;
+					bStartLevel = LTTRUE;
+				}
+			}
 		}
 		else
 		{
@@ -3108,6 +3144,20 @@ void CGameServerShell::UpdateMultiplayer()
 				}
 			}
 
+		}
+		for (int b = 0; b < g_BotMgr.GetNumBots(); b++)
+		{
+			CPlayerObj* pBot = g_BotMgr.GetBotPlayer(b);
+			if (!pBot) continue;
+			if (pBot->GetState() == PS_GHOST)
+			{
+				bOneFound = LTTRUE;
+			}
+			else
+			{
+				if (pBot->GetTeamID() == 1) bOneAlive1 = LTTRUE;
+				if (pBot->GetTeamID() == 2) bOneAlive2 = LTTRUE;
+			}
 		}
 		if (bOneFound)
 		{

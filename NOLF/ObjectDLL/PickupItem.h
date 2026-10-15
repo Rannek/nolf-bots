@@ -23,6 +23,8 @@ class PickupItem : public GameBase
 		PickupItem();
 		~PickupItem();
 
+		LTFLOAT	GetRespawnDelay() const { return m_fRespawnDelay; }	// Used by bots
+
 	protected :
 
         uint32          EngineMessageFn (uint32 messageID, void *pData, LTFLOAT lData);

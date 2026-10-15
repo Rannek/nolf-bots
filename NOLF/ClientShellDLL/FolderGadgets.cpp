@@ -62,7 +62,8 @@ LTBOOL CFolderGadgets::IsAvailable()
 
 	CPlayerStats* pStats = g_pInterfaceMgr->GetPlayerStats();
 	int numGadgets = g_pWeaponMgr->GetNumWeapons();
-	for (int i=0; i < numGadgets; i++)
+	int i;
+	for (i =0; i < numGadgets; i++)
 	{
 		WEAPON *pGadget = g_pWeaponMgr->GetWeapon(i);
 		if (pStats->CanUseWeapon(i) && pGadget->IsAGadget())
@@ -130,7 +131,8 @@ void	CFolderGadgets::BuildGadgetsList()
 
 	int nWID = WMGR_INVALID_ID;
     WEAPON* pGadget = LTNULL;
-	for (int i=0; i< pMission->nNumRequiredGadgets; i++)
+	int i;
+	for (i =0; i< pMission->nNumRequiredGadgets; i++)
 	{
 		nWID = pMission->aRequiredGadgets[i];
 		pGadget = g_pWeaponMgr->GetWeapon(nWID);
@@ -515,7 +517,8 @@ void CFolderGadgets::SkipOutfitting()
 	pData->ClearGadgets();
 	int nWID = WMGR_INVALID_ID;
     WEAPON* pGadget = LTNULL;
-	for (int i=0; i< pMission->nNumRequiredGadgets; i++)
+	int i;
+	for (i =0; i< pMission->nNumRequiredGadgets; i++)
 	{
 		nWID = pMission->aRequiredGadgets[i];
 		pGadget = g_pWeaponMgr->GetWeapon(nWID);

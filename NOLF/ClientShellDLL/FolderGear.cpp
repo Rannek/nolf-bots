@@ -66,7 +66,8 @@ LTBOOL CFolderGear::IsAvailable()
 	if (pMission->nNumAllowedGear > 0) return LTTRUE;
 
 	int numGear = g_pWeaponMgr->GetNumGearTypes();
-	for (int i=0; i < numGear; i++)
+	int i;
+	for (i =0; i < numGear; i++)
 	{
 		GEAR *pGear = g_pWeaponMgr->GetGear(i);
 		if (pStats->CanUseGear(i) && pGear && pGear->bExclusive)
@@ -523,7 +524,8 @@ void CFolderGear::SkipOutfitting()
 
 	int nSlotsUsed = 0;
 
-	for (int i=0; i< pMission->nNumRequiredGear; i++)
+	int i;
+	for (i =0; i< pMission->nNumRequiredGear; i++)
 	{
 		nGID = pMission->aRequiredGear[i];
 		pGear = g_pWeaponMgr->GetGear(nGID);

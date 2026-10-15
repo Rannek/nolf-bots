@@ -25,6 +25,19 @@ class AmmoBox : public PickupItem
 		AmmoBox();
 		virtual void	PickedUp(HMESSAGEREAD hRead);
 
+		// What's in the box (bots plan their loot runs with this).  In
+		// multiplayer the "original" contents are what it respawns with.
+		int		GetAmmoTypes(uint8* aIds, int nMax) const
+		{
+			int n = 0;
+			for (int i = 0; i < AB_MAX_TYPES && n < nMax; i++)
+			{
+				if (m_nOriginalAmmoCount[i] > 0)	aIds[n++] = m_nOriginalAmmoId[i];
+				else if (m_nAmmoCount[i] > 0)		aIds[n++] = m_nAmmoId[i];
+			}
+			return n;
+		}
+
 	protected :
 
         uint32          EngineMessageFn(uint32 messageID, void *pData, LTFLOAT fData);

@@ -113,7 +113,8 @@ void	CFolderWeapons::BuildWeaponsList()
 
 	int nWID = WMGR_INVALID_ID;
     WEAPON* pWeapon = LTNULL;
-	for (int i=0; i< pMission->nNumRequiredWeapons; i++)
+	int i;
+	for (i =0; i< pMission->nNumRequiredWeapons; i++)
 	{
 		nWID = pMission->aRequiredWeapons[i];
 		pWeapon = g_pWeaponMgr->GetWeapon(nWID);
@@ -500,7 +501,8 @@ void CFolderWeapons::SkipOutfitting()
 	pData->ClearWeapons();
 	int nWID = WMGR_INVALID_ID;
     WEAPON* pWeapon = LTNULL;
-	for (int i=0; i< pMission->nNumRequiredWeapons; i++)
+	int i;
+	for (i =0; i< pMission->nNumRequiredWeapons; i++)
 	{
 		nWID = pMission->aRequiredWeapons[i];
 		pWeapon = g_pWeaponMgr->GetWeapon(nWID);

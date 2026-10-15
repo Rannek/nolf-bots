@@ -853,7 +853,7 @@ void CJoystickAxisTurn::SaveToConsole(ILTClient *pClientDE)
 // Constructor
 CJoystickAxisLook::CJoystickAxisLook()
 {
-	CJoystickAxisBase::CJoystickAxisBase();
+	// base class already constructed
 
 	// Members
     m_bFixedPosition=LTTRUE;
@@ -990,7 +990,7 @@ void CJoystickAxisLook::SaveToConsole(ILTClient *pClientDE)
 // Contructor
 CJoystickAxisMove::CJoystickAxisMove()
 {
-	CJoystickAxisBase::CJoystickAxisBase();
+	// base class already constructed
 }
 
 // Load from the console

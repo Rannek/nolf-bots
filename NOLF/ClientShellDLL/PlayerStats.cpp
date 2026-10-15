@@ -1309,7 +1309,8 @@ void CPlayerStats::SetMultiplayerObjectives(HMESSAGEREAD hMessage)
     uint8 nNumObj = g_pLTClient->ReadFromMessageByte(hMessage);
 
 	//read list of objectives
-    for (uint8 i = 0; i < nNumObj; i++)
+    uint8 i;
+    for (i = 0; i < nNumObj; i++)
 	{
         uint32 dwId = g_pLTClient->ReadFromMessageDWord(hMessage);
 		m_Objectives.Add(dwId);

@@ -184,6 +184,10 @@ CPlayerObj::CPlayerObj() : CCharacter()
 	m_fAirLevel				= MAX_AIR_LEVEL;
 	m_fOldModelAlpha		= 1.0f;
     m_hClient               = LTNULL;
+	m_bIsBot				= LTFALSE;
+	m_nBotID				= 0;
+	m_dwBotCommands			= 0;
+	m_fLastFireTime			= -100.0f;
 	m_fLeashLen				= DEFAULT_LEASHLEN;
 	m_eState				= PS_DEAD;
     m_bGodMode              = LTFALSE;
@@ -584,7 +588,7 @@ void CPlayerObj::PreCreateSpecialFX(CHARCREATESTRUCT& cs)
     cs.bIsPlayer	= LTTRUE;
 	cs.nTrackers	= 4;
 	cs.nDimsTracker = 1;
-	cs.nClientID	= (uint8) g_pLTServer->GetClientID(m_hClient);
+	cs.nClientID	= (uint8) GetPlayerID();
 
 	cs.SetChatting(m_bChatting);
 }
@@ -605,6 +609,7 @@ LTBOOL CPlayerObj::HandleMusicMessage(const char* szMsg)
 
 	// Send message to client containing the music trigger information
 
+    if (!m_hClient) return LTTRUE;
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_MUSIC);
 
 	// ILTServer::CreateString does not destroy szMsg so this is safe
@@ -863,6 +868,7 @@ LTBOOL CPlayerObj::HandleFadeScreenMessage(char* pMsg, LTBOOL bFadeIn)
     LTFLOAT fFadeTime = (LTFLOAT) atof(pMsg);
     if (fFadeTime < 0.1f) return LTFALSE;
 
+    if (!m_hClient) return LTTRUE;
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_INFOCHANGE);
     g_pLTServer->WriteToMessageByte(hMessage, IC_FADE_SCREEN_ID);
     g_pLTServer->WriteToMessageByte(hMessage, bFadeIn);
@@ -892,6 +898,7 @@ LTBOOL CPlayerObj::HandleMissionTextMessage(char* pMsg)
 
     uint32 dwTextId = (uint32) atol(pArg);
 
+    if (!m_hClient) return LTTRUE;
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_INFOCHANGE);
     g_pLTServer->WriteToMessageByte(hMessage, IC_MISSION_TEXT_ID);
     g_pLTServer->WriteToMessageByte(hMessage, 0);
@@ -922,6 +929,7 @@ LTBOOL CPlayerObj::HandleMissionFailedMessage(char* pMsg)
 
     uint32 dwTextId = (uint32) atol(pArg);
 
+    if (!m_hClient) return LTTRUE;
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_INFOCHANGE);
     g_pLTServer->WriteToMessageByte(hMessage, IC_MISSION_FAILED_ID);
     g_pLTServer->WriteToMessageByte(hMessage, 0);
@@ -1035,7 +1043,7 @@ LTBOOL CPlayerObj::Update()
     g_pLTServer->SetNextUpdate(m_hObject, UPDATE_DELTA);
 
 
-    if (!m_hClient || m_bWaitingForAutoSave || !m_bRespawnCalled) return LTFALSE;
+    if (!HasController() || m_bWaitingForAutoSave || !m_bRespawnCalled) return LTFALSE;
 
 	// Don't unlock the player until they've done the handshake
 //	if (!HasDoneHandshake()) return LTFALSE;
@@ -1092,6 +1100,13 @@ LTBOOL CPlayerObj::Update()
 
 	UpdateClientPhysics();
 
+
+	// Let a bot decide what to do (sets its commands)...
+
+	if (m_bIsBot)
+	{
+		UpdateBot();
+	}
 
 	// Update the movement flags...
 
@@ -1170,7 +1185,7 @@ LTBOOL CPlayerObj::Update()
 
 void CPlayerObj::UpdateCommands()
 {
-	if (!m_hClient || !m_bAllowInput) return;
+	if (!HasController() || !m_bAllowInput) return;
 
 	// Posture
 
@@ -1210,7 +1225,7 @@ void CPlayerObj::UpdateCommands()
 
 	if ( WS_NONE == m_nWeaponStatus )
 	{
-        if ( g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_FIRING) || m_Animator.IsAnimatingPosture(CAnimatorPlayer::eFire) )
+        if ( IsCommandOn(COMMAND_ID_FIRING) || m_Animator.IsAnimatingPosture(CAnimatorPlayer::eFire) )
 		{
 			m_Animator.SetPosture(CAnimatorPlayer::eFire);
 		}
@@ -1275,7 +1290,7 @@ void CPlayerObj::UpdateCommands()
 	{
 		m_Animator.SetMain(CAnimatorPlayer::eSnowmobile);
 	}
-    else if ( m_nMotionStatus != MS_NONE && !g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_DUCK) )
+    else if ( m_nMotionStatus != MS_NONE && !IsCommandOn(COMMAND_ID_DUCK) )
 	{
 		// Only do jumping stuff if we're not ducking
 
@@ -1301,7 +1316,7 @@ void CPlayerObj::UpdateCommands()
 
 		// Movement
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_RUN) || m_bRunLock)
+        if (IsCommandOn(COMMAND_ID_RUN) || m_bRunLock)
 		{
 			m_Animator.SetMovement(CAnimatorPlayer::eRunning);
 		}
@@ -1314,7 +1329,7 @@ void CPlayerObj::UpdateCommands()
 
         if (!m_bBodyOnLadder && !m_bSpectatorMode && !IsLiquid(m_eContainerCode))
         {
-            if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_DUCK) || m_bForceDuck)
+            if (IsCommandOn(COMMAND_ID_DUCK) || m_bForceDuck)
 		    {
 				m_Animator.SetMovement(CAnimatorPlayer::eCrouching);
 		    }
@@ -1336,45 +1351,45 @@ void CPlayerObj::UpdateCommands()
 
 		// Direction
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_FORWARD))
+        if (IsCommandOn(COMMAND_ID_FORWARD))
 		{
 			m_Animator.SetDirection(CAnimatorPlayer::eForward);
 		}
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_REVERSE))
+        if (IsCommandOn(COMMAND_ID_REVERSE))
 		{
 			m_Animator.SetDirection(CAnimatorPlayer::eBackward);
 		}
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_STRAFE))
+        if (IsCommandOn(COMMAND_ID_STRAFE))
 		{
-            if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_LEFT))
+            if (IsCommandOn(COMMAND_ID_LEFT))
 			{
 				m_Animator.SetDirection(CAnimatorPlayer::eStrafeLeft);
 			}
 
-            if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_RIGHT))
+            if (IsCommandOn(COMMAND_ID_RIGHT))
 			{
 				m_Animator.SetDirection(CAnimatorPlayer::eStrafeRight);
 			}
 		}
 		else
 		{
-            if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_LEFT))
+            if (IsCommandOn(COMMAND_ID_LEFT))
 			{
 			}
 
-            if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_RIGHT))
+            if (IsCommandOn(COMMAND_ID_RIGHT))
 			{
 			}
 		}
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_STRAFE_RIGHT))
+        if (IsCommandOn(COMMAND_ID_STRAFE_RIGHT))
 		{
 			m_Animator.SetDirection(CAnimatorPlayer::eStrafeRight);
 		}
 
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_STRAFE_LEFT))
+        if (IsCommandOn(COMMAND_ID_STRAFE_LEFT))
 		{
 			m_Animator.SetDirection(CAnimatorPlayer::eStrafeLeft);
 		}
@@ -1382,11 +1397,11 @@ void CPlayerObj::UpdateCommands()
 
 	if ( m_bBodyOnLadder )
 	{
-        if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_FORWARD) || g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_JUMP))
+        if (IsCommandOn(COMMAND_ID_FORWARD) || IsCommandOn(COMMAND_ID_JUMP))
 		{
 			m_Animator.SetMain(CAnimatorPlayer::eClimbingUp);
 		}
-        else if (g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_REVERSE) || g_pLTServer->IsCommandOn(m_hClient, COMMAND_ID_DUCK))
+        else if (IsCommandOn(COMMAND_ID_REVERSE) || IsCommandOn(COMMAND_ID_DUCK))
 		{
 			m_Animator.SetMain(CAnimatorPlayer::eClimbingDown);
 		}
@@ -1407,10 +1422,10 @@ void CPlayerObj::UpdateCommands()
 
 void CPlayerObj::UpdateMovement()
 {
-	if (!m_hClient) return;
+	if (!HasController()) return;
 
 	// If we're in multiplayer, handle leashing
-	if ((g_pGameServerShell->GetGameType() != SINGLE) && m_bUseLeash)
+	if (m_hClient && (g_pGameServerShell->GetGameType() != SINGLE) && m_bUseLeash)
 	{
 		// Get the amount we've moved away from where the client says we are
 		LTVector curPos;
@@ -1930,7 +1945,7 @@ void CPlayerObj::Respawn(uint8 nServerLoadGameFlags)
 		ToggleGodMode();
 	}
 
-    if (!m_hClient || m_dwLastLoadFlags == LOAD_RESTORE_GAME) return;
+    if (!HasController() || m_dwLastLoadFlags == LOAD_RESTORE_GAME) return;
     if (!g_pWeaponMgr) return;
 
 	if ( !m_pAttachments )
@@ -2004,9 +2019,19 @@ void CPlayerObj::Respawn(uint8 nServerLoadGameFlags)
 
         LTVector vVec = pStartPt->GetPitchYawRoll();
 
-        HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_ORIENTATION);
-        g_pLTServer->WriteToMessageVector(hMessage, &vVec);
-        g_pLTServer->EndMessage(hMessage);
+        if (m_hClient)
+        {
+            HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_ORIENTATION);
+            g_pLTServer->WriteToMessageVector(hMessage, &vVec);
+            g_pLTServer->EndMessage(hMessage);
+        }
+        else
+        {
+            // Bots: face the start point direction (yaw)...
+            LTRotation rRot;
+            g_pMathLT->SetupEuler(rRot, 0.0f, vVec.y, 0.0f);
+            g_pLTServer->SetObjectRotation(m_hObject, &rRot);
+        }
 
 
 		// Get start point trigger info...
@@ -2124,9 +2149,12 @@ void CPlayerObj::HandleTeleport(TeleportPoint* pTeleportPoint)
     LTVector vVec;
 	vVec = pTeleportPoint->GetPitchYawRoll();
 
-    HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_ORIENTATION);
-    g_pLTServer->WriteToMessageVector(hMessage, &vVec);
-    g_pLTServer->EndMessage(hMessage);
+    if (m_hClient)
+    {
+        HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_ORIENTATION);
+        g_pLTServer->WriteToMessageVector(hMessage, &vVec);
+        g_pLTServer->EndMessage(hMessage);
+    }
 
 	// Turn off the leash
 	m_bUseLeash = LTFALSE;
@@ -2487,9 +2515,9 @@ void CPlayerObj::StartDeath()
 
 void CPlayerObj::ChangeState(PlayerState eState)
 {
-	if (!m_hClient) return;
-
 	m_eState = eState;
+
+	if (!m_hClient) return;
 
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_PLAYER_STATE_CHANGE);
     g_pLTServer->WriteToMessageByte(hMessage, m_eState);
@@ -3204,7 +3232,8 @@ LTBOOL CPlayerObj::Activate(LTVector vPos, LTVector vDir, LTBOOL bEditMode)
 				{
                     HSTRING hstrName = g_pLTServer->CreateString(pName);
 
-                    HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_EDIT_OBJECTINFO);
+                    if (!m_hClient) return LTTRUE;
+    HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(m_hClient, MID_EDIT_OBJECTINFO);
                     g_pLTServer->WriteToMessageHString(hMessage, hstrName);
                     g_pLTServer->EndMessage(hMessage);
 
@@ -3880,7 +3909,7 @@ void CPlayerObj::UpdateTeamID()
 	if (g_pGameServerShell->GetGameType() == COOPERATIVE_ASSAULT)
 	{
 
-        CTeam* pTeam = g_pGameServerShell->GetTeamMgr()->GetTeamFromPlayerID(g_pLTServer->GetClientID(GetClient()));
+        CTeam* pTeam = g_pGameServerShell->GetTeamMgr()->GetTeamFromPlayerID(GetPlayerID());
 		if (pTeam)
 		{
 			m_dwTeamID = pTeam->GetID();
@@ -4453,6 +4482,7 @@ void CPlayerObj::HandleWeaponFireMessage(HMESSAGEREAD hRead)
 
 
 	pWeapon->Fire(fireInfo);
+	NoteFired();
 
 
 	// Update number of shots fired...
@@ -4468,7 +4498,7 @@ void CPlayerObj::HandleWeaponFireMessage(HMESSAGEREAD hRead)
 
 	if (pAmmoData->eType == PROJECTILE)
 	{
-        uint8 nClientID = (uint8) g_pLTServer->GetClientID(m_hClient);
+        uint8 nClientID = (uint8) GetPlayerID();
 
         HMESSAGEWRITE hMessage = g_pLTServer->StartInstantSpecialEffectMessage(&vFirePos);
         g_pLTServer->WriteToMessageByte(hMessage, SFX_PLAYERSOUND_ID);
@@ -4506,7 +4536,7 @@ void CPlayerObj::HandleWeaponSoundMessage(HMESSAGEREAD hRead)
     uint8 nId       = g_pLTServer->ReadFromMessageByte(hRead);
     g_pLTServer->ReadFromMessageVector(hRead, &vPos);
 
-    uint8 nClientID = (uint8) g_pLTServer->GetClientID(m_hClient);
+    uint8 nClientID = (uint8) GetPlayerID();
 
     HMESSAGEWRITE hMessage = g_pLTServer->StartInstantSpecialEffectMessage(&vPos);
     g_pLTServer->WriteToMessageByte(hMessage, SFX_PLAYERSOUND_ID);
@@ -4587,7 +4617,7 @@ void CPlayerObj::HandleClientMsg(HMESSAGEREAD hRead)
 
 				if (bPlaySound)
 				{
-					uint8 nClientID = (uint8) g_pLTServer->GetClientID(m_hClient);
+					uint8 nClientID = (uint8) GetPlayerID();
 
 					LTVector vPos;
 					g_pLTServer->GetObjectPos(m_hObject, &vPos);
@@ -4615,7 +4645,7 @@ void CPlayerObj::HandleClientMsg(HMESSAGEREAD hRead)
 
 				if (bPlaySound)
 				{
-					uint8 nClientID = (uint8) g_pLTServer->GetClientID(m_hClient);
+					uint8 nClientID = (uint8) GetPlayerID();
 
 					LTVector vPos;
 					g_pLTServer->GetObjectPos(m_hObject, &vPos);
@@ -4939,9 +4969,12 @@ void CPlayerObj::SetVehiclePhysicsModel(PlayerPhysicsModel eModel)
 	dwFlags &= ~FLAG_YROTATION;
 	g_pLTServer->SetObjectFlags(m_hObject, dwFlags);
 
-	dwFlags = g_pLTServer->GetClientInfoFlags(m_hClient);
-	dwFlags |= CIF_SENDCOBJROTATION;
-    g_pLTServer->SetClientInfoFlags(m_hClient, dwFlags);
+	if (m_hClient)
+	{
+		dwFlags = g_pLTServer->GetClientInfoFlags(m_hClient);
+		dwFlags |= CIF_SENDCOBJROTATION;
+		g_pLTServer->SetClientInfoFlags(m_hClient, dwFlags);
+	}
 
 	// Create the vehicle model...
 
@@ -5004,9 +5037,12 @@ void CPlayerObj::SetNormalPhysicsModel()
 	dwFlags |= FLAG_YROTATION;
 	g_pLTServer->SetObjectFlags(m_hObject, dwFlags);
 
-	dwFlags = g_pLTServer->GetClientInfoFlags(m_hClient);
-	dwFlags &= ~CIF_SENDCOBJROTATION;
-    g_pLTServer->SetClientInfoFlags(m_hClient, dwFlags);
+	if (m_hClient)
+	{
+		dwFlags = g_pLTServer->GetClientInfoFlags(m_hClient);
+		dwFlags &= ~CIF_SENDCOBJROTATION;
+		g_pLTServer->SetClientInfoFlags(m_hClient, dwFlags);
+	}
 
 	// Remove any vehicle models...
 
@@ -5140,7 +5176,7 @@ LTFLOAT	CPlayerObj::GetFootstepVolume()
 void CPlayerObj::SendIDToClients()
 {
 	// Update clients with new info...
-	uint8 nClientID = (uint8) g_pLTServer->GetClientID(m_hClient);
+	uint8 nClientID = (uint8) GetPlayerID();
 
     HMESSAGEWRITE hMessage = g_pLTServer->StartMessage(LTNULL, MID_SFX_MESSAGE);
 	g_pLTServer->WriteToMessageByte(hMessage, SFX_CHARACTER_ID);
@@ -5205,7 +5241,7 @@ LTFLOAT CPlayerObj::ComputeDamageModifier(ModelNode eModelNode)
 
 /*
 
-		nVictimID = g_pLTServer->GetClientID(pVictim->GetClient());
+		nVictimID = pVictim->GetPlayerID();
 		pVictimTeam = g_pGameServerShell->GetTeamMgr()->GetTeamFromPlayerID(nVictimID);
 */
 
@@ -5221,7 +5257,7 @@ void  CPlayerObj::AddToScore(int nAdd)
 	m_nFragCount += nAdd;
 	if (m_dwTeamID > 0)
 	{
-		uint32	nID = g_pLTServer->GetClientID(GetClient());
+		uint32	nID = GetPlayerID();
 		CTeam* pTeam = g_pGameServerShell->GetTeamMgr()->GetTeamFromPlayerID(nID);
 		pTeam->AddScore(nAdd);
 	}
@@ -5231,7 +5267,7 @@ void  CPlayerObj::IncFragCount()
 	m_nFragCount++;
 	if (m_dwTeamID > 0 && g_NetFragScore.GetFloat() > 0.0f)
 	{
-		uint32	nID = g_pLTServer->GetClientID(GetClient());
+		uint32	nID = GetPlayerID();
 		CTeam* pTeam = g_pGameServerShell->GetTeamMgr()->GetTeamFromPlayerID(nID);
 		pTeam->AddScore(1);
 	}
@@ -5251,4 +5287,123 @@ const char* CPlayerObj::GetHeadSkinFilename() const
 	{
 		return m_szMultiplayerHead;
 	}
+}
+
+
+// ----------------------------------------------------------------------- //
+//
+//	ROUTINE:	CPlayerObj::GetPlayerID
+//
+//	PURPOSE:	Get the ID clients use to identify this player (scoreboard,
+//				frag messages, weapon fx).  Bots don't have an HCLIENT so
+//				they use IDs from a range real clients never get.
+//
+// ----------------------------------------------------------------------- //
+
+uint32 CPlayerObj::GetPlayerID() const
+{
+	if (m_bIsBot) return m_nBotID;
+
+	return g_pLTServer->GetClientID(m_hClient);
+}
+
+// ----------------------------------------------------------------------- //
+//
+//	ROUTINE:	CPlayerObj::IsCommandOn
+//
+//	PURPOSE:	Is the given command (COMMAND_ID_*) active?
+//
+// ----------------------------------------------------------------------- //
+
+LTBOOL CPlayerObj::IsCommandOn(int nCommand) const
+{
+	if (m_bIsBot)
+	{
+		if (nCommand < 0 || nCommand >= 32) return LTFALSE;
+		return (m_dwBotCommands & (1 << nCommand)) ? LTTRUE : LTFALSE;
+	}
+
+	if (!m_hClient) return LTFALSE;
+
+	return g_pLTServer->IsCommandOn(m_hClient, nCommand);
+}
+
+void CPlayerObj::SetBotCommand(int nCommand, LTBOOL bOn)
+{
+	if (nCommand < 0 || nCommand >= 32) return;
+
+	if (bOn)
+	{
+		m_dwBotCommands |= (1 << nCommand);
+	}
+	else
+	{
+		m_dwBotCommands &= ~(1 << nCommand);
+	}
+}
+
+// ----------------------------------------------------------------------- //
+//
+//	ROUTINE:	CPlayerObj::BotInit
+//
+//	PURPOSE:	Bot equivalent of MultiplayerInit (which reads the same info
+//				from the client).  szModel is "Model,style", e.g. "Hero,action".
+//
+// ----------------------------------------------------------------------- //
+
+void CPlayerObj::BotInit(uint32 nBotID, const char* szName, const char* szModel, uint32 dwTeamID)
+{
+	m_bIsBot	= LTTRUE;
+	m_nBotID	= nBotID;
+	m_dwTeamID	= dwTeamID;
+	m_eGameType = g_pGameServerShell->GetGameType();
+
+	SetNetName(szName);
+
+	char szTemp[128];
+	SAFE_STRCPY(szTemp, (szModel && szModel[0]) ? szModel : "Hero,action");
+
+	// Skin and head come from the "<model>_<style>" tag, like the client does...
+
+	char szTag[128];
+	SAFE_STRCPY(szTag, szTemp);
+	if (strchr(szTag, ','))
+	{
+		*strchr(szTag, ',') = '_';
+	}
+	_strlwr(szTag);
+
+	strcpy(m_szMultiplayerSkin, "chars\\skins\\hero_action.dtx");
+	strcpy(m_szMultiplayerHead, "chars\\skins\\hero_action_head.dtx");
+
+	CButeMgr* pButes = g_pModelButeMgr->GetButeMgr();
+	if (pButes->Exist(szTag, "Skin0") && pButes->Exist(szTag, "Head0"))
+	{
+		char szSkin[128], szHead[128];
+		SAFE_STRCPY(szSkin, (const char*)pButes->GetString(szTag, "Skin0"));
+		SAFE_STRCPY(szHead, (const char*)pButes->GetString(szTag, "Head0"));
+		const char* pSkin = strchr(szSkin, ',');
+		const char* pHead = strchr(szHead, ',');
+		strcpy(m_szMultiplayerSkin, pSkin ? pSkin+1 : szSkin);
+		strcpy(m_szMultiplayerHead, pHead ? pHead+1 : szHead);
+	}
+
+	char* pStr = strtok(szTemp, ",");
+	m_eModelId = g_pModelButeMgr->GetModelId(pStr);
+	if (m_eModelId >= g_pModelButeMgr->GetNumModels())
+	{
+		m_eModelId = g_pModelButeMgr->GetModelId("HERO");
+	}
+	m_eModelSkeleton = g_pModelButeMgr->GetModelSkeleton(m_eModelId);
+
+	pStr = strtok(NULL, ",");
+	m_eModelStyle = g_pModelButeMgr->GetModelStyleFromProperty(pStr);
+
+	ResetModel();
+	SetPhysicsModel(PPM_NORMAL);
+
+	// Bots move on the server, so let the engine do gravity/collision...
+
+	m_dwFlags |= FLAG_GRAVITY | FLAG_STAIRSTEP | FLAG_SOLID;
+	g_pLTServer->SetObjectFlags(m_hObject, g_pLTServer->GetObjectFlags(m_hObject) | FLAG_GRAVITY | FLAG_STAIRSTEP);
 }

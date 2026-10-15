@@ -57,6 +57,7 @@
 #include <SDL.h>
 #include "ConsoleMgr.h"
 #include "DetourMgr.h"
+#include "FolderHost.h"
 
 extern ConsoleMgr* g_pConsoleMgr;
 
@@ -1423,6 +1424,8 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
             // g_pLTClient->RunConsoleString("+NumConsoleLines 0");
 		}
 
+		std::string sBotMap = GetConsoleString("BotMap", "");
+
         if (hVar = g_pLTClient->GetConsoleVar("runworld"))
 		{
             if (!LoadWorld(g_pLTClient->GetVarValueString(hVar)))
@@ -1431,6 +1434,16 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
                 g_pLTClient->ShutdownWithMessage(g_pLTClient->GetStringData(hString));
                 g_pLTClient->FreeString(hString);
 				return LT_ERROR;
+			}
+		}
+		else if (!sBotMap.empty())
+		{
+			// Quick-host a bot match: +BotMap "Worlds\Multi\..." [+BotGameType 1|2]
+			CFolderHost* pHost = (CFolderHost*)m_InterfaceMgr.GetFolderMgr()->GetFolderFromID(FOLDER_ID_HOST);
+			if (!pHost || !pHost->QuickLaunch(GetConsoleInt("BotGameType", DEATHMATCH), sBotMap.c_str()))
+			{
+				m_InterfaceMgr.LoadFailed();
+				m_InterfaceMgr.SwitchToFolder(g_pInterfaceMgr->GetMainFolder());
 			}
 		}
 		else if (GetConsoleInt("SkipTitle",0))
