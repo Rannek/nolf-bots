@@ -12,26 +12,45 @@ SCUBA gear themselves.
 
 WHAT YOU NEED
 -------------
- - No One Lives Forever, Game of the Year edition
- - NOLF Modernizer 1.006, installed and working:
-   https://haekb.itch.io/nolf-modernizer
+ 1. No One Lives Forever, GAME OF THE YEAR edition (Hydro is part of the
+    GOTY edition).  The game hasn't been sold for years, so this means your
+    own copy (the GOTY CD).
+ 2. NOLF Modernizer 1.006 (free): https://haekb.itch.io/nolf-modernizer
+    Unpack it into your NOLF folder.  It fixes the game for modern PCs and
+    the bots are built on it.
+ 3. Windows 10 or 11.  On Linux or Steam Deck it runs under Wine / Proton
+    (Lutris, Steam "add a non-Steam game"); see LINUX below.
 
 
 INSTALL
 -------
- 1. Unpack this zip into your NOLF folder (the one with NOLF.exe), and let it
-    merge the folders.
- 2. Start NOLF.exe, click "Advanced", then "Customize".
- 3. "Add" BOTS.REZ, so it is AFTER (below) Modernizer.rez in the list.
-    Keep "Always load these rez files" ticked and click "Ok".
+ Unpack this zip into your NOLF folder (the one with NOLF.exe) and let it
+ merge the folders.  That's all.
 
 
 PLAY
 ----
- Multiplayer > Host.  Choose H.A.R.M. vs UNITY and Hydro, then start.
- Bots join within a few seconds and fill the game up to 12 players.
+ 1. Double-click "Play NOLF with Bots.bat" in your NOLF folder, then click
+    Play in the launcher.
+ 2. Multiplayer > Host.  Choose H.A.R.M. vs UNITY, put Hydro in the map list,
+    and start.
+ 3. Bots join within a few seconds and fill the game up to 12 players.
+
  On a map they haven't seen before, the bots first measure it and remember it
  for next time, so the first game there takes a moment longer to get going.
+
+ Rather start NOLF.exe as usual?  In the launcher click "Advanced", then
+ "Customize", "Add" BOTS.REZ so it is AFTER (below) Modernizer.rez, keep
+ "Always load these rez files" ticked and click "Ok".
+
+
+LINUX / STEAM DECK / OTHER SHORTCUTS
+------------------------------------
+ Start NOLF.exe with these launch options (arguments):
+     -rez Custom/MODERNIZER.REZ -rez Custom/BOTS.REZ
+ BOTS.REZ has to come last.  If your shortcut already loads Modernizer
+ (-rez Custom/MODERNIZER.REZ) and there are no bots, that's why: add
+ -rez Custom/BOTS.REZ after it.
 
 
 SETTINGS
@@ -64,8 +83,8 @@ CHAT COMMANDS (while you host, type them in the chat)
 
 UNINSTALL
 ---------
- Advanced > Customize: remove BOTS.REZ.  Then delete Custom\BOTS.REZ and the
- Bots folder.
+ Delete Custom\BOTS.REZ, "Play NOLF with Bots.bat" and the Bots folder.  If
+ you added BOTS.REZ under Advanced > Customize, remove it there too.
 
 
 THE BOTS FOLDER

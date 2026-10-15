@@ -11,17 +11,29 @@ gear themselves.
 
 **[Download the latest version](../../releases/latest)**
 
-## Install
+## What you need
 
-You need NOLF Game of the Year edition with
-[NOLF Modernizer 1.006](https://haekb.itch.io/nolf-modernizer) installed.
+1. **No One Lives Forever, Game of the Year edition.** Hydro is part of GOTY. The
+   game hasn't been sold for years, so this means your own copy (the GOTY CD).
+2. **[NOLF Modernizer 1.006](https://haekb.itch.io/nolf-modernizer)** (free), unpacked
+   into your NOLF folder. It fixes the game for modern PCs, and the bots are built on it.
+3. **Windows 10 or 11**, or Linux / Steam Deck with Wine or Proton (Lutris, or Steam's
+   "add a non-Steam game").
 
-1. Download `NOLF-Bots-<version>.zip` from [Releases](../../releases) and unpack it
-   into your NOLF folder (the one with `NOLF.exe`).
-2. Start `NOLF.exe`, click **Advanced**, then **Customize**.
-3. **Add** `BOTS.REZ` so it comes after `Modernizer.rez`. Keep
-   **Always load these rez files** ticked and click **Ok**.
-4. **Multiplayer > Host**, choose H.A.R.M. vs UNITY and Hydro. Bots fill the game to 12 players.
+## Install and play
+
+1. [Download the zip](../../releases/latest) and unpack it into your NOLF folder (the one
+   with `NOLF.exe`), merging the folders.
+2. Double-click **Play NOLF with Bots.bat** and click **Play** in the launcher.
+3. **Multiplayer > Host**, choose H.A.R.M. vs UNITY, put Hydro in the map list and start.
+   Bots join within a few seconds and fill the game to 12 players.
+
+Rather start `NOLF.exe` as usual? In the launcher go to **Advanced > Customize**, **Add**
+`BOTS.REZ` after `Modernizer.rez`, and keep **Always load these rez files** ticked.
+
+**Linux, Steam Deck and other shortcuts:** start `NOLF.exe` with
+`-rez Custom/MODERNIZER.REZ -rez Custom/BOTS.REZ`. `BOTS.REZ` has to come last: if your
+shortcut already loads Modernizer and there are no bots, add `-rez Custom/BOTS.REZ` after it.
 
 Settings live in `Bots\bots.cfg`, which is written the first time you host. The
 defaults: everyone runs 50% faster, items come back 3x faster, no falling damage,

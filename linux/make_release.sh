@@ -3,7 +3,8 @@
 #   linux/make_release.sh <version> [out-dir]      (run ninja first)
 # Packs the deployed server DLL (BotsRez/Object.lto) into Custom/BOTS.REZ
 # with LithRez, adds what the bots know about Hydro (map scan, learned trouble
-# spots, trained fighting values) and release/README.txt.  The zip unpacks
+# spots, trained fighting values), release/README.txt and the Windows
+# launcher (release/Play NOLF with Bots.bat).  The zip unpacks
 # straight into a NOLF folder.  bots.cfg isn't in it: the game writes the
 # defaults the first time someone hosts, so an update never overwrites a
 # player's own settings.
@@ -38,9 +39,10 @@ for f in 07HYDRO_AM.bwm 07HYDRO_AM.nav genome.txt; do
   cp "$GAME/Bots/$f" "$STAGE/pkg/Bots/"
 done
 sed -e "s/@VERSION@/$VERSION/" -e 's/$/\r/' "$SRC/release/README.txt" > "$STAGE/pkg/README-NOLF-Bots.txt"
+sed -e 's/$/\r/' "$SRC/release/Play NOLF with Bots.bat" > "$STAGE/pkg/Play NOLF with Bots.bat"
 
 rm -f "$ZIP"
-bsdtar --format zip -cf "$ZIP" -C "$STAGE/pkg" README-NOLF-Bots.txt Custom Bots
+bsdtar --format zip -cf "$ZIP" -C "$STAGE/pkg" README-NOLF-Bots.txt "Play NOLF with Bots.bat" Custom Bots
 rm -rf "$STAGE"
 echo "$ZIP"
 bsdtar -tvf "$ZIP"
